@@ -906,7 +906,8 @@ tools.forEach(tool => {
           </div>
         </div>
         <div>
-          <label class="field-label">ActiZ kleuren (kies 1–3 kleuren)</label>
+          <label class="field-label">ActiZ kleuren (1–3 aanbevolen)</label>
+          <div class="field-warning" id="cwarn-${tool.id}">⚠ Meer dan 3 kleuren geeft een onrustig beeld. Probeer er maximaal 3 te kiezen.</div>
           <div class="color-picker-row">
             <label class="color-chip"><input type="checkbox" name="${tool.id}-kleur" value="turquoise" data-hex="#00A1B4" data-naam="Turquoise" checked onchange="upd('${tool.id}')"><span class="color-chip-visual" style="color:#00A1B4"><span class="color-chip-dot" style="background:#00A1B4"></span>Turquoise<span class="color-chip-check">✓</span></span></label>
             <label class="color-chip"><input type="checkbox" name="${tool.id}-kleur" value="geel" data-hex="#F9B000" data-naam="Geel" checked onchange="upd('${tool.id}')"><span class="color-chip-visual" style="color:#C78E00"><span class="color-chip-dot" style="background:#F9B000"></span>Geel<span class="color-chip-check">✓</span></span></label>
@@ -1101,6 +1102,13 @@ function upd(id) {
       });
     }
     warnEl.classList.toggle('visible', filled > 5);
+  }
+
+  // Waarschuwing bij te veel kleuren
+  const cwarnEl = document.getElementById(`cwarn-${id}`);
+  if (cwarnEl) {
+    const aantalKleuren = document.querySelectorAll(`input[name="${id}-kleur"]:checked`).length;
+    cwarnEl.classList.toggle('visible', aantalKleuren > 3);
   }
 }
 
