@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Beeldgenerator Toolkit — ActiZ Digitaal Denken en Doen</title>
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1ED7D8VWYJ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-1ED7D8VWYJ');
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;1,400&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -295,7 +305,7 @@ footer strong { color: var(--text); font-weight: 600; }
 
   <section class="section" id="tools">
     <div class="section-label">Kant-en-klaar</div>
-    <h2>Zeven prompt-tools</h2>
+    <h2>Tien prompt-tools</h2>
     <p class="section-intro">Klik op een tool voor de invulvelden. De velden zijn vooringevuld met een voorbeeld op basis van het ActiZ-visiedocument "Toekomst van werk 2035".</p>
     <div class="tools" id="toolsContainer"></div>
   </section>
@@ -905,7 +915,14 @@ function tog(id) {
 
   // Sluit alles, open de geklikte (als die nog niet open was)
   document.querySelectorAll('.tool').forEach(t => t.classList.remove('open'));
-  if (!wasOpen) el.classList.add('open');
+  if (!wasOpen) {
+    el.classList.add('open');
+    // GA4 event: welke tool wordt geopend
+    if (typeof gtag === 'function') {
+      const t = tools.find(t => t.id === id);
+      gtag('event', 'tool_geopend', { tool_id: id, tool_naam: t ? t.title : id });
+    }
+  }
 
   // Herstel scroll zodat de aangeklikte header op dezelfde plek blijft
   const newHeaderTop = header.getBoundingClientRect().top;
@@ -1061,6 +1078,11 @@ function cp(id) {
   const btn = document.getElementById(`cb-${id}`);
 
   function markCopied() {
+    // GA4 event: prompt gekopieerd
+    if (typeof gtag === 'function') {
+      const t = tools.find(t => t.id === id);
+      gtag('event', 'prompt_gekopieerd', { tool_id: id, tool_naam: t ? t.title : id });
+    }
     btn.classList.add('copied');
     btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#00a1b4" stroke-width="2"><polyline points="2 8 6 12 14 4"/></svg> Gekopieerd!`;
     setTimeout(() => {
