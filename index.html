@@ -185,6 +185,24 @@ footer strong { color: var(--text); font-weight: 600; }
 .option-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--teal); cursor: pointer; flex-shrink: 0; }
 .option-row label { font-size: 13px; color: var(--text-mid); cursor: pointer; user-select: none; }
 
+/* Kleurenkiezer */
+.color-picker-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.color-chip { position: relative; cursor: pointer; }
+.color-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.color-chip-visual {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 20px;
+  border: 2px solid var(--border);
+  font-size: 12px; font-weight: 600; font-family: 'Barlow', sans-serif;
+  color: var(--text-muted); transition: all 0.15s; user-select: none;
+}
+.color-chip-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.color-chip input:checked + .color-chip-visual {
+  border-color: currentColor; background: rgba(0,0,0,0.04);
+}
+.color-chip input:checked + .color-chip-visual .color-chip-check { display: inline; }
+.color-chip-check { display: none; font-size: 10px; }
+
 /* WAARSCHUWING */
 .field-warning { display: none; padding: 8px 12px; background: var(--yellow-light); border: 1px solid var(--yellow); border-radius: var(--radius-sm); font-size: 12px; color: var(--yellow-dark); font-weight: 500; margin-bottom: 0.75rem; }
 .field-warning.visible { display: flex; align-items: center; gap: 6px; }
@@ -343,12 +361,29 @@ Zorgprofessionals zijn vrouwen in moderne werkkleding, in een thuiszorg- of wijk
 const DIVERSITEIT_TEKST = `
 CULTURELE DIVERSITEIT (verplicht): De afgebeelde zorgprofessionals en cliënten moeten een representatieve afspiegeling vormen van de Nederlandse samenleving en het zorgpersoneel. Toon diversiteit in huidskleur, haartype en culturele achtergrond. Minimaal één persoon met een niet-westerse achtergrond.`;
 
+function getGekozenKleuren(toolId) {
+  const checks = document.querySelectorAll(`input[name="${toolId}-kleur"]:checked`);
+  const kleuren = [];
+  checks.forEach(c => kleuren.push({ naam: c.dataset.naam, hex: c.dataset.hex }));
+  return kleuren;
+}
+
 function getNOOIT(toolId) {
   const divEl = document.getElementById(`${toolId}-diversiteit`);
   const disEl = document.getElementById(`${toolId}-disclaimer`);
   const disTxt = document.getElementById(`${toolId}-disclaimertekst`);
   const fmtEl = document.getElementById(`${toolId}-formaat`);
   let result = NOOIT_BASE;
+
+  // Kleurkeuze
+  const kleuren = getGekozenKleuren(toolId);
+  if (kleuren.length > 0) {
+    const kleurLijst = kleuren.map(k => `${k.naam} ${k.hex}`).join(', ');
+    const primair = kleuren[0];
+    const accenten = kleuren.slice(1).map(k => `${k.naam} ${k.hex}`).join(' en ') || 'lichtgrijs';
+    result += `\n\nKLEURPALET (ActiZ huisstijl — verplicht): Gebruik uitsluitend deze kleuren: ${kleurLijst}. Primaire kleur: ${primair.naam} ${primair.hex}. Accentkleuren: ${accenten}. Aanvullen met lichtgrijs en wit. Geen andere dominante kleuren gebruiken.`;
+  }
+
   if (divEl && divEl.checked) result += DIVERSITEIT_TEKST;
   if (disEl && disEl.checked && disTxt && disTxt.value.trim()) {
     result += `\n\nVoeg onderaan de afbeelding een kleine, goed leesbare disclaimer toe in een neutraal lettertype: "${disTxt.value.trim()}"`;
@@ -525,11 +560,12 @@ Layout:
 • Midden: één zorgprofessional visueel gesplitst in twee helften
 • Linkerkant = ${v.oud || 'oude situatie'} · Rechterkant = ${v.nieuw || 'nieuwe situatie'}
 
-Infographic blokken links — "${v.oud || 'OUD'}": kernpunten van de oude situatie
-Infographic blokken rechts — "${v.nieuw || 'NIEUW'}": kernpunten van de nieuwe situatie
+BELANGRIJK — Vergelijking per rij (zelfde onderwerp naast elkaar):
+Elk infographic blok links ("${v.oud || 'OUD'}") moet recht tegenover het bijbehorende blok rechts ("${v.nieuw || 'NIEUW'}") staan, zodat hetzelfde thema steeds op dezelfde horizontale rij vergeleken wordt. Voorbeeld: als links "papieren dossiers" staat, staat rechts "digitale uitwisseling" op exact dezelfde hoogte. Dit maakt de vergelijking in één oogopslag duidelijk.
+
 Extra blok onderaan "DOEL": positief resultaat van de verandering
 
-Context en inhoud:
+Context en inhoud (verdeel de onderwerpen in logische paren van oud ↔ nieuw):
 ${v.tekst || '[BESCHRIJF DE VERGELIJKING]'}
 
 Stijl: retro comic infographic, duidelijke zwarte lijnen, halftone shading, editorial magazine stijl
@@ -867,6 +903,16 @@ tools.forEach(tool => {
             <button type="button" class="format-btn" onclick="setFormat('${tool.id}','vierkant',this)">□ Vierkant</button>
             <button type="button" class="format-btn" onclick="setFormat('${tool.id}','staand',this)">▯ Staand</button>
             <button type="button" class="format-btn active" onclick="setFormat('${tool.id}','liggend',this)">▬ Liggend</button>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">ActiZ kleuren (kies 1–3 kleuren)</label>
+          <div class="color-picker-row">
+            <label class="color-chip"><input type="checkbox" name="${tool.id}-kleur" value="turquoise" data-hex="#00A1B4" data-naam="Turquoise" checked onchange="upd('${tool.id}')"><span class="color-chip-visual" style="color:#00A1B4"><span class="color-chip-dot" style="background:#00A1B4"></span>Turquoise<span class="color-chip-check">✓</span></span></label>
+            <label class="color-chip"><input type="checkbox" name="${tool.id}-kleur" value="geel" data-hex="#F9B000" data-naam="Geel" checked onchange="upd('${tool.id}')"><span class="color-chip-visual" style="color:#C78E00"><span class="color-chip-dot" style="background:#F9B000"></span>Geel<span class="color-chip-check">✓</span></span></label>
+            <label class="color-chip"><input type="checkbox" name="${tool.id}-kleur" value="paars" data-hex="#3D0A85" data-naam="Paars" onchange="upd('${tool.id}')"><span class="color-chip-visual" style="color:#3D0A85"><span class="color-chip-dot" style="background:#3D0A85"></span>Paars<span class="color-chip-check">✓</span></span></label>
+            <label class="color-chip"><input type="checkbox" name="${tool.id}-kleur" value="groen" data-hex="#14AB78" data-naam="Groen" onchange="upd('${tool.id}')"><span class="color-chip-visual" style="color:#14AB78"><span class="color-chip-dot" style="background:#14AB78"></span>Groen<span class="color-chip-check">✓</span></span></label>
+            <label class="color-chip"><input type="checkbox" name="${tool.id}-kleur" value="rood" data-hex="#A91352" data-naam="Rood" onchange="upd('${tool.id}')"><span class="color-chip-visual" style="color:#A91352"><span class="color-chip-dot" style="background:#A91352"></span>Rood<span class="color-chip-check">✓</span></span></label>
           </div>
         </div>
         <div>
